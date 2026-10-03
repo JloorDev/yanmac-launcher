@@ -265,6 +265,11 @@ final class GameManager: ObservableObject {
     /// señal típica de que se congeló, por ejemplo en una cinemática).
     /// `nil` mientras todo parece normal.
     @Published var stuckGameHint: String?
+    /// Resultado de la última vez que se tocó "Revisar de nuevo" en
+    /// Opciones → Archivo del juego. Sin esto, refresh() hacía su trabajo
+    /// (volvía a buscar el .exe) pero no se veía ningún resultado en
+    /// pantalla, así que el botón se sentía como si no hiciera nada.
+    @Published var gameFileCheckMessage: String?
     @Published var reduceMetalValidation: Bool = GameManager.savedReduceMetalValidation {
         didSet { Self.savedReduceMetalValidation = reduceMetalValidation }
     }
@@ -511,6 +516,12 @@ final class GameManager: ObservableObject {
                 Self.fontsAutoInstallAttempted = true
                 installFonts(silent: true)
             }
+        }
+
+        if let exe = gameExePath {
+            gameFileCheckMessage = "✔ Juego encontrado: \((exe as NSString).lastPathComponent)"
+        } else {
+            gameFileCheckMessage = "No se encontró el ejecutable del juego."
         }
     }
 

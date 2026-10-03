@@ -22,28 +22,50 @@ struct ContentView: View {
                 )
             }
         }
+        // Este picker vive aquí, al mismo nivel "estable" que el resto del
+        // árbol de vistas, en vez de dentro de ModsSectionView. Un
+        // .fileImporter pegado a una rama de un switch (que aparece y
+        // desaparece al cambiar de sección) puede simplemente no
+        // presentarse en macOS. Montado siempre aquí no tiene ese problema.
+        //
+        // IMPORTANTE: antes había DOS .fileImporter separados encadenados
+        // uno tras otro en esta misma vista (uno para el .exe, otro para
+        // mods). Ese patrón tiene un bug conocido en SwiftUI/macOS: cuando
+        // encadenas varios .fileImporter (o .sheet) sobre la misma vista,
+        // el sistema de presentación solo termina respetando uno de forma
+        // confiable — en la práctica, el último de la cadena "gana" y el
+        // primero queda mudo (por eso "Elegir otro .exe..." no abría el
+        // Finder, mientras que "Subir mod..." sí). La solución es fusionar
+        // ambos en un único .fileImporter que decide, según cuál de los
+        // dos @State esté en true, qué filtro mostrar y qué hacer con el
+        // resultado.
         .fileImporter(
-            isPresented: $showFilePicker,
-            allowedContentTypes: [UTType(filenameExtension: "exe") ?? .item]
+            isPresented: Binding(
+                get: { showFilePicker || showModImporter },
+                set: { newValue in
+                    if !newValue {
+                        showFilePicker = false
+                        showModImporter = false
+                    }
+                }
+            ),
+            allowedContentTypes: showFilePicker
+                ? [UTType(filenameExtension: "exe") ?? .item]
+                : [.item],
+            allowsMultipleSelection: showModImporter
         ) { result in
-            if case .success(let url) = result {
-                game.chooseExeManually(url.path)
+            switch result {
+            case .success(let urls):
+                if showFilePicker, let first = urls.first {
+                    game.chooseExeManually(first.path)
+                } else if showModImporter {
+                    game.importMods(from: urls)
+                }
+            case .failure:
+                break
             }
-        }
-        // Este picker vive aquí, al mismo nivel "estable" que el de arriba,
-        // en vez de dentro de ModsSectionView. Un .fileImporter pegado a
-        // una rama de un switch (que aparece y desaparece al cambiar de
-        // sección) puede simplemente no presentarse en macOS — por eso no
-        // abría el Finder al tocar "Subir mod...". Montado siempre aquí,
-        // junto con el otro, no tiene ese problema.
-        .fileImporter(
-            isPresented: $showModImporter,
-            allowedContentTypes: [.item],
-            allowsMultipleSelection: true
-        ) { result in
-            if case .success(let urls) = result {
-                game.importMods(from: urls)
-            }
+            showFilePicker = false
+            showModImporter = false
         }
         .preferredColorScheme(game.appTheme.colorScheme)
         // El idioma de la interfaz se resuelve con L10n.t(...) en cada
@@ -1120,7 +1142,27 @@ private struct SettingsCategoryContent: View {
     @ViewBuilder private var gameFileContent: some View {
         HStack {
             Button(L10n.t("Elegir otro .exe...")) { showFilePicker = true }
-            Button(L10n.t("Revisar de nuevo")) { game.refresh() }
+            Button(L10n.t("Revisar de nuevo")) {
+                // refresh() es tan rápido que, cuando el resultado no
+                // cambia (el .exe ya estaba detectado), el mensaje de abajo
+                // se queda exactamente igual y el botón se siente "muerto"
+                // aunque sí hizo su trabajo. Este pequeño retraso muestra
+                // "Revisando..." un instante antes del resultado, para que
+                // el clic siempre se sienta como que pasó algo.
+                game.gameFileCheckMessage = L10n.t("Revisando...")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    game.refresh()
+                }
+            }
+        }
+        // "Revisar de nuevo" sí hacía su trabajo (volvía a buscar el .exe),
+        // pero esta pantalla nunca mostraba el resultado, así que se sentía
+        // como si no pasara nada. game.gameFileCheckMessage se actualiza al
+        // final de refresh() — ver GameManager.swift.
+        if let message = game.gameFileCheckMessage {
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 
