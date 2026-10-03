@@ -76,7 +76,3 @@ The app is macOS-only — if your project ever shows iOS/visionOS as supported d
 - [ ] More graphics presets as GPTK improves
 
 Contributions and suggestions welcome.
-
-## License
-
-_Not yet licensed — add a `LICENSE` file (e.g. MIT) before relying on this being open source in the legal sense. Until then, all rights are reserved by default._
