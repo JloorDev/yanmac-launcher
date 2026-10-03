@@ -1,70 +1,81 @@
 # YanMac Launcher
 
-A native macOS launcher for **Yandere Simulator**, built with SwiftUI. It installs and manages [WINE](https://www.winehq.org)/[Apple's Game Porting Toolkit](https://developer.apple.com/games/game-porting-toolkit/) for you, downloads and updates the game, manages mods and backups, and launches it — so you don't have to touch the Terminal.
+A native macOS app for playing **Yandere Simulator** without touching the Terminal. Point it at nothing, and it sets up everything needed to run the Windows game on your Mac — WINE, the compatibility patch, the fonts, the game itself — then gets out of your way.
 
-> **Disclaimer:** This project is **not affiliated with, endorsed by, or associated with YandereDev** or the official Yandere Simulator project in any way. It's an independent, fan-made tool that automates running the Windows game on macOS via WINE. Yandere Simulator itself is downloaded from its [official source](https://yanderesimulator.com) — this launcher doesn't bundle, modify, or redistribute the game.
+> **Disclaimer:** This project is **not affiliated with, endorsed by, or associated with YandereDev** or the official Yandere Simulator project in any way. It's an independent, fan-made launcher. Yandere Simulator itself is downloaded from its [official source](https://yanderesimulator.com) — this launcher doesn't bundle, modify, or redistribute the game.
 
-## What it does
+![YanMac Launcher](docs/play_menu.png)
 
-- **Sets up WINE/GPTK automatically** — detects or installs Homebrew, WINE, and the dependencies needed to run Windows games on macOS.
-- **Downloads and installs the game** with a real progress bar (not just a spinner), and checks the downloaded file's integrity before extracting it.
-- **Checks for game updates** periodically and on demand, comparing the remote file against what you last installed.
-- **Installs the required Windows fonts** automatically, so in-game text (dialogue, HUD) renders correctly — no manual steps.
-- **Applies a Unity 6 compatibility patch** (`version.dll`) next to the game executable automatically.
-- **Manages mods**: import `.zip` mods or folders, enable/disable them individually, and restore the vanilla game state.
-- **Backs up save data and the whole game folder** with one click.
-- **Diagnoses crashes**: if the game closes unexpectedly, it reads the WINE/Metal logs and gives you a plain-language guess at what went wrong (missing DLL, Direct3D issue, Rosetta mismatch, disk space, etc.).
-- **Detects a frozen game** (no log activity for a while) and offers a safe "Force Quit" instead of making you guess.
-- **Single-instance guard** — won't let you open two copies at once, which could corrupt your WINE prefix or game folder.
-- **Graceful quit** — warns you if you try to close the launcher while the game is running or something is installing/downloading, and cleans up any leftover WINE processes when it exits.
-- Light/dark theme, English/Spanish interface, play-time stats, and a one-click diagnostic report you can paste when asking for help.
+## Features
+
+**Zero-setup install**
+A guided, three-step wizard — Prepare WINE → Download the game → Play — handles Homebrew, WINE/Game Porting Toolkit, and the Unity 6 compatibility patch automatically. No command line required.
+
+![Gameplay](docs/gif_gameplay.gif)
+
+**One-click game management**
+Download, update, verify, repair, or fully reinstall the game from inside the app. Real progress bars for every long operation (install, download, extraction, mod upload, file verification) — never just a frozen spinner.
+
+![Download progress](docs/gif_load.gif)
+
+**Mod support**
+Import mods as a `.zip` or a folder, enable or disable them individually, and roll back to a clean vanilla install whenever you want.
+
+![Mod list](docs/mod_menu.png)
+
+**Backups**
+Back up your save data or the entire game folder with one click, so a bad mod or a broken update never costs you progress.
+
+**Smart diagnostics**
+If the game crashes or closes early, the launcher reads the WINE/Metal logs and tells you in plain language what likely went wrong — a missing file, a graphics issue, Rosetta, disk space — instead of leaving you with a wall of log text. A built-in "Copy diagnostic report" button gives you everything needed to ask for help in one paste.
+
+**Frozen-game detection**
+If the game stops responding (common during cutscenes), the launcher notices and offers a safe "Force Quit" instead of making you guess whether to wait it out.
+
+**Graphics profiles**
+Switch between graphics presets (or fine-tune manually) without editing config files, including an optional native macOS FPS overlay (Metal HUD) to compare performance.
+
+**Safe by default**
+Won't let you accidentally open two copies at once, warns you before closing while something's running, and cleans up after itself.
+
+**Light/dark theme, English & Spanish interface, play-time stats.**
+
+## Known issues
+
+- **Some in-game text doesn't render** (dialogue boxes, parts of the HUD) for some setups, even with the required Windows fonts installed automatically. This looks like a shader/text-rendering gap in WINE/Game Porting Toolkit's translation of the game's UI, not something the launcher's own setup is missing — DXVK and a font-substitution workaround were both tried and didn't fix it. Still investigating; a real fix may depend on upstream WINE/GPTK improvements rather than anything this launcher can patch around on its own.
+- Compatibility and performance depend entirely on WINE/Game Porting Toolkit's translation of Direct3D to Metal. Some visual glitches are outside what this launcher can fix — its diagnostics aim to point you in the right direction, not guarantee a solution.
+- Game Porting Toolkit targets Apple Silicon; results on Intel Macs may vary and aren't the main focus.
+
+![Missing text issue](docs/gif_bug.gif)
+
+Found something else, or have an idea for the text-rendering issue? Open an issue — this is actively maintained.
 
 ## Requirements
 
-- macOS 14.0 or later, Apple Silicon recommended (Game Porting Toolkit is built for Apple Silicon).
-- [Homebrew](https://brew.sh) — the launcher can install this part of the chain for you, but Homebrew itself needs to already be on your Mac.
+- macOS 14.0 or later, Apple Silicon recommended.
+- [Homebrew](https://brew.sh) installed (the launcher installs WINE and everything else on top of it for you).
 - Xcode 15+ if you're building from source.
 
 ## Building from source
 
 1. Clone the repo:
    ```bash
-   git clone https://github.com/<your-username>/YanMacLauncher.git
-   cd YanMacLauncher
+   git clone https://github.com/<your-username>/yanmac-launcher.git
+   cd yanmac-launcher
    ```
-2. Open `YanMac Launcher.xcodeproj` in Xcode.
+2. Open the `.xcodeproj` in Xcode.
 3. Select the **YanMac Launcher** scheme with **My Mac** as the destination.
 4. Build and run (⌘R).
 
 The app is macOS-only — if your project ever shows iOS/visionOS as supported destinations, remove them (Target → General → Supported Destinations), since this app uses `Process`, `AppKit`, and WINE, none of which exist on those platforms.
 
-## Project structure
+## Roadmap / ideas
 
-```
-YanMacLauncher/
-├── GameManager/          # Core app logic (split by responsibility)
-│   ├── GameManager.swift          # State, settings, init
-│   ├── GameManager+Setup.swift    # WINE/Homebrew install flow
-│   ├── GameManager+Download.swift # Game download, extraction, updates
-│   ├── GameManager+Play.swift     # Launching the game, crash/freeze detection
-│   ├── GameManager+Mods.swift     # Mod import/management
-│   ├── GameManager+Backups.swift  # Save & game folder backups
-│   ├── GameManager+Maintenance.swift
-│   ├── GameManager+Diagnostics.swift
-│   ├── GameManager+Notifications.swift
-│   ├── GameManager+QuickActions.swift
-│   └── GameManager+Utilities.swift
-├── Models/                # Small value types (enums, structs)
-├── AppDelegate.swift       # App lifecycle: single instance, quit confirmation
-├── YansimLauncherApp.swift # App entry point
-├── ContentView.swift       # All SwiftUI views
-└── Localizable.xcstrings   # English/Spanish strings
-```
+- [ ] Track down the in-game text rendering issue (see Known issues above)
+- [ ] App icon
+- [ ] More graphics presets as GPTK improves
 
-## Known limitations
-
-- Game Porting Toolkit support is best on Apple Silicon; results on Intel Macs may vary.
-- Performance and compatibility depend entirely on WINE/GPTK's own translation of Direct3D to Metal — some visual glitches or crashes are outside what this launcher can fix, though its diagnostics try to point you in the right direction.
+Contributions and suggestions welcome.
 
 ## License
 
