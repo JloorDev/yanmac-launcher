@@ -1,0 +1,57 @@
+# Xcode
+#
+build/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+## Obj-C/Swift specific
+*.xcscmblueprint
+*.xccheckout
+
+## App packaging
+*.ipa
+
+## Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Swift Package Manager
+.build/
+Package.resolved
+
+# CocoaPods (not used here, but harmless to keep ignored)
+Pods/
+
+# Carthage (not used here, but harmless to keep ignored)
+Carthage/Build/
+
+# fastlane (not used here, but harmless to keep ignored)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# macOS
+.DS_Store
+
+# This app's own runtime data — never commit a downloaded copy of the game,
+# your WINE prefix, logs, backups, or imported mods.
+Game/
+*.zip
+*.wine/
+Logs/
+Backups/
