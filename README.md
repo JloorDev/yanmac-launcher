@@ -60,7 +60,7 @@ Found something else, or have an idea for the text-rendering issue? Open an issu
 
 1. Clone the repo:
    ```bash
-   git clone https://github.com/<your-username>/yanmac-launcher.git
+   git clone https://github.com/JloorDev/yanmac-launcher.git
    cd yanmac-launcher
    ```
 2. Open the `.xcodeproj` in Xcode.
